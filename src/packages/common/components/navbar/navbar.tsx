@@ -18,7 +18,6 @@ import {
   BsHouseFill,
   BsListOl,
   BsPeopleFill,
-  BsPersonFill,
   BsServer,
   BsShieldFill,
   BsSteam,
@@ -161,6 +160,10 @@ export function Navbar() {
           {profile?.isAdmin && (
             <Flex direction="column" gap="4">
               <Heading size="3">Admin</Heading>
+              <NavLink href="/admin/tournaments">
+                <BsTrophyFill />
+                Tournaments
+              </NavLink>
               <NavLink href="/admin/maps">
                 <BsHouseFill />
                 Maps

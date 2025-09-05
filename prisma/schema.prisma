@@ -88,22 +88,23 @@ model Match {
 }
 
 model Tournament {
-  id          Int            @id @default(autoincrement())
-  name        String
-  description String
-  type        TournamentType @default(SingleElimination)
-  logo        String
-  banner      String
-  matches     Match[]
-  isActive    Boolean        @default(true)
-  isPublic    Boolean        @default(true)
-  isOpen      Boolean        @default(true)
-  maxRating   Int
-  startDate   DateTime
-  endDate     DateTime
-  teams       Team[]
-  maxTeams    Int
-  maps        Map[]
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  type         TournamentType @default(SingleElimination)
+  logo         String
+  banner       String
+  matches      Match[]
+  isActive     Boolean        @default(true)
+  isPublic     Boolean        @default(true)
+  isOpen       Boolean        @default(true)
+  maxRating    Int
+  startDate    DateTime
+  endDate      DateTime
+  teams        Team[]
+  maxTeams     Int
+  maps         Map[]
+  formatConfig Json?
 }
 
 enum TournamentType {

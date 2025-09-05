@@ -1,15 +1,7 @@
 "use client";
 
 import { Prisma } from "@prisma/client";
-import {
-  Badge,
-  Card,
-  Flex,
-  FlexProps,
-  Heading,
-  Inset,
-  Text,
-} from "@radix-ui/themes";
+import { Badge, Card, Flex, FlexProps, Heading, Text } from "@radix-ui/themes";
 import Image from "next/image";
 import React from "react";
 import { formatDistance } from "date-fns";
@@ -24,9 +16,11 @@ type Tournament = Prisma.TournamentGetPayload<{
 export function TournamentCard({
   data,
   props,
+  variant = "default",
 }: {
   data: Tournament;
   props?: FlexProps & React.RefAttributes<HTMLDivElement>;
+  variant?: "default" | "compact";
 }) {
   const { showTournamentPreview, setTournamentData } = useTournamentPreview();
 
@@ -42,6 +36,106 @@ export function TournamentCard({
     teams,
     type,
   } = data;
+
+  if (variant === "compact") {
+    return (
+      <Flex
+        width="100%"
+        height="100%"
+        minWidth="300px"
+        maxWidth="300px"
+        {...props}
+      >
+        <Card
+          asChild
+          style={{
+            userSelect: "none",
+            padding: 0,
+          }}
+        >
+          <button
+            onClick={() => {
+              setTournamentData(data);
+              showTournamentPreview();
+            }}
+          >
+            <Flex direction="column" gap="2" height="100%" width="100%" p="3">
+              {/* Title and status */}
+              <Flex justify="between" align="start">
+                <Heading size="3" style={{ lineHeight: 1.1 }}>
+                  {name}
+                </Heading>
+                {!isActive ? (
+                  <Badge variant="solid" color="red">
+                    Ended
+                  </Badge>
+                ) : (
+                  <Badge variant="solid" color={isOpen ? "green" : "red"}>
+                    {isOpen ? "Open" : "Closed"}
+                  </Badge>
+                )}
+              </Flex>
+
+              {/* Meta */}
+              <Flex align="center" gap="2">
+                <Badge color="gray">{getTypeName(type)}</Badge>
+                <Badge color="gray">{`${teams.length} / ${maxTeams} Teams`}</Badge>
+                <Text size="1" color="gray">
+                  {formatDistance(startDate, new Date(), {
+                    addSuffix: true,
+                    includeSeconds: true,
+                  })}
+                </Text>
+              </Flex>
+
+              {/* Optional thumbnail (dimmed) */}
+              {banner ? (
+                <Image
+                  draggable={false}
+                  src={banner}
+                  alt="Tournament banner"
+                  style={{
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    width: "100%",
+                    height: "96px",
+                    borderRadius: 6,
+                    filter: "grayscale(40%) contrast(90%) brightness(80%)",
+                  }}
+                  width={294}
+                  height={96}
+                />
+              ) : null}
+
+              {/* Description (truncated) */}
+              <Text
+                size="1"
+                color="gray"
+                style={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {description}
+              </Text>
+
+              {/* Rank cap */}
+              {maxRating !== 0 && (
+                <Badge color={getPlayerColor(maxRating * 1000)}>
+                  <Flex align="center" gap="1">
+                    <RankIcon />
+                    {`${maxRating}K`}
+                  </Flex>
+                </Badge>
+              )}
+            </Flex>
+          </button>
+        </Card>
+      </Flex>
+    );
+  }
 
   return (
     <Flex
@@ -75,6 +169,7 @@ export function TournamentCard({
                 objectPosition: "center",
                 width: "100%",
                 height: "120px",
+                filter: "grayscale(30%) contrast(90%) brightness(85%)",
               }}
               width={350}
               height={120}
@@ -101,7 +196,18 @@ export function TournamentCard({
                 </Flex>
 
                 {/* Description */}
-                <Text size="1">{description}</Text>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {description}
+                </Text>
               </Flex>
 
               {/* Tags */}

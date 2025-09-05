@@ -7,10 +7,16 @@ import { BsCaretDownFill, BsCaretUpFill } from "react-icons/bs";
 import { Table as TableCore } from "@tanstack/table-core";
 import { flexRender } from "@tanstack/react-table";
 
-export function LeaderboardTable({ table }: { table: TableCore<UserType> }) {
+export function LeaderboardTable({
+  table,
+  loading = false,
+}: {
+  table: TableCore<UserType>;
+  loading?: boolean;
+}) {
   return (
     <Flex direction="column" gap="2">
-      <Skeleton loading={table.getRowModel().rows.length === 0}>
+      <Skeleton loading={loading}>
         <Table.Root variant="surface">
           <Table.Header>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -30,7 +36,7 @@ export function LeaderboardTable({ table }: { table: TableCore<UserType> }) {
                       <Flex width="100%" align="center" justify="start" gap="1">
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                         {{
                           asc: <BsCaretUpFill />,
@@ -44,27 +50,43 @@ export function LeaderboardTable({ table }: { table: TableCore<UserType> }) {
             ))}
           </Table.Header>
           <Table.Body>
-            {table.getRowModel().rows.map((row) => (
-              <Table.Row key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <Table.Cell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </Table.Cell>
-                ))}
+            {table.getRowModel().rows.length === 0 && !loading ? (
+              <Table.Row>
+                <Table.Cell colSpan={table.getAllColumns().length}>
+                  <Flex align="center" justify="center" py="3">
+                    <Text>No players found.</Text>
+                  </Flex>
+                </Table.Cell>
               </Table.Row>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <Table.Row key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <Table.Cell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+              ))
+            )}
           </Table.Body>
         </Table.Root>
       </Skeleton>
-      <Skeleton
-        width="fit-content"
-        loading={table.getRowModel().rows.length === 0}
-      >
+      {loading ? (
+        <Skeleton width="fit-content" loading>
+          <Text weight="medium" size="1">
+            Showing 0 of 0 players
+          </Text>
+        </Skeleton>
+      ) : (
         <Text weight="medium" size="1">
           Showing {table.getRowModel().rows.length} of {table.getRowCount()}{" "}
           players
         </Text>
-      </Skeleton>
+      )}
     </Flex>
   );
 }

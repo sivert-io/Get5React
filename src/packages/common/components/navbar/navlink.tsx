@@ -11,10 +11,13 @@ export function NavLink({
   href: string;
 }) {
   const pathname = usePathname();
-  const isActive = pathname.includes(href);
+  const isRoot = href === "/";
+  const isActive = isRoot
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
   return (
     <Button
-      color={(href !== "/" ? isActive : href === pathname) ? undefined : "gray"}
+      color={isActive ? undefined : "gray"}
       asChild
       variant="ghost"
       radius="large"

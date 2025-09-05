@@ -8,6 +8,15 @@ import { capName } from "@/common";
 
 const prisma = new PrismaClient();
 
+function isEnvAdmin(steamId: string): boolean {
+  const list = process.env.ADMIN_STEAM_IDS || "";
+  const ids = list
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return ids.includes(steamId);
+}
+
 async function registerUser(profile: SteamProfile) {
   const existingUser = await prisma.user.findUnique({
     where: { steamID: profile.steamid },
@@ -17,7 +26,7 @@ async function registerUser(profile: SteamProfile) {
     consola.info("Registering new user with id:", profile.steamid);
 
     const userCount = await prisma.user.count();
-    const isAdmin = userCount === 0;
+    const isAdmin = isEnvAdmin(profile.steamid) || userCount === 0;
 
     await prisma.user.create({
       data: {
@@ -37,6 +46,8 @@ async function registerUser(profile: SteamProfile) {
       data: {
         name: capName(profile.personaname),
         avatar: profile.avatarfull,
+        // Keep admin if already admin, or grant if in env list
+        isAdmin: existingUser.isAdmin || isEnvAdmin(profile.steamid),
       },
     });
 
@@ -46,7 +57,7 @@ async function registerUser(profile: SteamProfile) {
 
 async function handler(
   req: NextRequest,
-  ctx: { params: { nextauth: string[] } },
+  ctx: { params: { nextauth: string[] } }
 ) {
   return NextAuth(req, ctx, {
     providers: [
@@ -54,7 +65,7 @@ async function handler(
         clientSecret: process.env.STEAM_SECRET!,
         callbackUrl: new URL(
           `/api/auth/callback`,
-          process.env.NEXTAUTH_URL || "http://localhost:3000",
+          process.env.NEXTAUTH_URL || "http://localhost:3000"
         ),
       }),
     ],

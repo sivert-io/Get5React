@@ -27,7 +27,8 @@ export default function Leaderboard() {
     data: [],
     id: "Rank distribution",
   });
-  const [highestNumber, setHighestNumber] = useState(50);
+  const [highestNumber, setHighestNumber] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -47,19 +48,32 @@ export default function Leaderboard() {
   });
 
   useEffect(() => {
-    axios.get("/api/users").then((res) => {
-      const users: UserType[] = res.data.users;
-      if (users.length === 0) return;
+    axios
+      .get("/api/users")
+      .then((res) => {
+        const users: UserType[] = res.data.users ?? [];
 
-      setPlayers(users.sort((a, b) => a.position - b.position));
+        const sorted = users.sort((a, b) => a.position - b.position);
+        setPlayers(sorted);
 
-      setRankDistribution({
-        id: "Rank distribution",
-        data: getRatingGroups(users),
-      });
+        const distribution = getRatingGroups(sorted);
+        setRankDistribution({
+          id: "Rank distribution",
+          data: distribution,
+        });
 
-      setHighestNumber(getRatingGroups(users).sort((a, b) => b.y - a.y)[0].y);
-    });
+        if (distribution.length > 0) {
+          setHighestNumber(distribution.sort((a, b) => b.y - a.y)[0].y);
+        } else {
+          setHighestNumber(0);
+        }
+      })
+      .catch(() => {
+        setPlayers([]);
+        setRankDistribution({ id: "Rank distribution", data: [] });
+        setHighestNumber(0);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -69,11 +83,12 @@ export default function Leaderboard() {
         <PageControls table={table} />
       </Flex>
 
-      <LeaderboardTable table={table} />
+      <LeaderboardTable table={table} loading={isLoading} />
 
       <PlayerDistributionGraph
         highestUserAmount={highestNumber}
         rankDistribution={rankDistribution}
+        loading={isLoading}
       />
     </Flex>
   );

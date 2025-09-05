@@ -15,6 +15,9 @@ export function addPositionsToUsers(players: any[]) {
 
 export function getRatingGroups(users: UserType[] | User[]) {
   // Calculate rank distribution
+  if (users.length === 0) {
+    return [];
+  }
   const step = 1000;
   const maxRating =
     Math.ceil(Math.max(...users.map((user) => user.rating)) / step) * step;

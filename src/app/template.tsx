@@ -47,10 +47,11 @@ export default function Template({ children }: { children: React.ReactNode }) {
             height="100%"
             width="100%"
             maxWidth="1400px"
-            columns="1084px 300px"
+            columns="300px 1084px"
             align="stretch"
             px="4"
           >
+            <Navbar />
             <div
               style={{
                 position: "relative",
@@ -59,7 +60,6 @@ export default function Template({ children }: { children: React.ReactNode }) {
             >
               {children}
             </div>
-            <Navbar />
           </Grid>
         )}
         {doesUsersExist === false && <Wizard />}

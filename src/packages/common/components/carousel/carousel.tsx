@@ -42,6 +42,7 @@ interface Props {
   showPagination?: boolean;
   showScrollbar?: boolean;
   showButtons?: boolean;
+  scrollToIndex?: number;
 }
 
 export function Carousel({
@@ -49,6 +50,7 @@ export function Carousel({
   showButtons,
   showPagination,
   showScrollbar,
+  scrollToIndex,
 }: Props) {
   const [firstElementInView, setFirstElementInView] = useState(0);
   const [lastElementInView, setLastElementInView] = useState(0);
@@ -85,6 +87,13 @@ export function Carousel({
       });
     }, 0);
   };
+
+  // Scroll to requested child when prop changes
+  React.useEffect(() => {
+    if (typeof scrollToIndex === "number" && scrollToIndex >= 0) {
+      scrollToChild(scrollToIndex);
+    }
+  }, [scrollToIndex]);
 
   return (
     <Flex position="relative">

@@ -1,10 +1,11 @@
 "use client";
 
 import { Carousel, Header } from "@/common";
-import { fakeCategories, fakeTournaments } from "@/fakeData";
 import { TournamentCard } from "@/tournament";
-import { Button, Flex, Heading } from "@radix-ui/themes";
+import { Button, Flex, Heading, Text } from "@radix-ui/themes";
 import { BsArrowRight } from "react-icons/bs";
+import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
 
 function TournamentCategory({
   data,
@@ -14,7 +15,7 @@ function TournamentCategory({
 }: {
   href: string;
   label: string;
-  data: typeof fakeTournaments;
+  data: any[];
   maxTournaments?: number;
 }) {
   return (
@@ -30,7 +31,11 @@ function TournamentCategory({
       </Flex>
       <Carousel showButtons>
         {data.slice(0, maxTournaments).map((tournament) => (
-          <TournamentCard key={tournament.id} data={tournament} />
+          <TournamentCard
+            key={tournament.id}
+            data={tournament}
+            variant="compact"
+          />
         ))}
       </Carousel>
     </Flex>
@@ -38,22 +43,56 @@ function TournamentCategory({
 }
 
 export default function Tournaments() {
+  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get("/api/tournaments")
+      .then((res) => setTournaments(res.data.tournaments ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const now = new Date();
+  const running = useMemo(
+    () =>
+      tournaments.filter(
+        (t) => new Date(t.startDate) <= now && new Date(t.endDate) >= now
+      ),
+    [tournaments]
+  );
+  const upcoming = useMemo(
+    () =>
+      tournaments
+        .filter((t) => new Date(t.startDate) > now)
+        .sort((a, b) => +new Date(a.startDate) - +new Date(b.startDate)),
+    [tournaments]
+  );
+  const ended = useMemo(
+    () =>
+      tournaments
+        .filter((t) => new Date(t.endDate) < now)
+        .sort((a, b) => +new Date(b.endDate) - +new Date(a.endDate)),
+    [tournaments]
+  );
+
   return (
     <Flex direction="column" gap="4" height="100%" pb="8">
       <Header>Tournaments</Header>
 
-      <Flex direction="column" gap="64px">
-        {fakeCategories.map((category) => (
+      {loading ? (
+        <Text color="gray">Loading…</Text>
+      ) : (
+        <Flex direction="column" gap="64px">
+          <TournamentCategory href="running" label="Running" data={running} />
           <TournamentCategory
-            key={category.slug}
-            data={fakeTournaments.filter((tournament) =>
-              category.tournamentIds.includes(tournament.id)
-            )}
-            href={category.slug}
-            label={category.label}
+            href="upcoming"
+            label="Upcoming"
+            data={upcoming}
           />
-        ))}
-      </Flex>
+          <TournamentCategory href="ended" label="Ended" data={ended} />
+        </Flex>
+      )}
     </Flex>
   );
 }
