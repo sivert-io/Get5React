@@ -8,6 +8,9 @@ import { BsCaretLeftFill, BsCaretRightFill } from "react-icons/bs";
 
 export function PageControls({ table }: { table: Table<UserType> }) {
   const [isFoucsed, setIsFoucsed] = useState(false);
+  const [pageInput, setPageInput] = useState<string>(
+    String(table.getState().pagination.pageIndex + 1)
+  );
   return (
     <Flex align="center" gap="4">
       <Flex gap="2" align="center">
@@ -55,14 +58,17 @@ export function PageControls({ table }: { table: Table<UserType> }) {
               width: "64px",
             }}
             value={
-              !isFoucsed ? table.getState().pagination.pageIndex + 1 : undefined
+              !isFoucsed
+                ? String(table.getState().pagination.pageIndex + 1)
+                : pageInput
             }
             onFocus={() => setIsFoucsed(true)}
-            onBlur={() => setIsFoucsed(false)}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+            onBlur={() => {
+              setIsFoucsed(false);
+              const page = pageInput ? Number(pageInput) - 1 : 0;
               table.setPageIndex(page);
             }}
+            onChange={(e) => setPageInput(e.target.value)}
             className="border p-1 rounded w-16"
           />
           <Text>of {table.getPageCount()}</Text>

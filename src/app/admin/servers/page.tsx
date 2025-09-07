@@ -35,6 +35,7 @@ export default function AdminServers() {
     note: "",
     isEnabled: true,
   });
+  const [portInput, setPortInput] = useState<string>("27015");
 
   useEffect(() => {
     axios
@@ -44,13 +45,18 @@ export default function AdminServers() {
   }, []);
 
   const upsert = async () => {
+    const parsedPort = parseInt(portInput, 10);
+    const payload: ServerForm = {
+      ...form,
+      port: Number.isNaN(parsedPort) ? form.port : parsedPort,
+    };
     if (form.id) {
-      const res = await axios.put("/api/servers", form);
+      const res = await axios.put("/api/servers", payload);
       setServers((prev) =>
         prev.map((s) => (s.id === form.id ? res.data.server : s))
       );
     } else {
-      const res = await axios.post("/api/servers", form);
+      const res = await axios.post("/api/servers", payload);
       setServers((prev) => [res.data.server, ...prev]);
     }
     setForm({
@@ -61,6 +67,7 @@ export default function AdminServers() {
       note: "",
       isEnabled: true,
     });
+    setPortInput("27015");
   };
 
   const del = async (id: number) => {
@@ -102,10 +109,12 @@ export default function AdminServers() {
         <TextField.Root
           placeholder="Port"
           type="number"
-          value={form.port}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, port: Number(e.target.value) }))
-          }
+          value={portInput}
+          onChange={(e) => setPortInput(e.target.value)}
+          onBlur={() => {
+            const n = parseInt(portInput, 10);
+            if (!Number.isNaN(n)) setForm((f) => ({ ...f, port: n }));
+          }}
         />
         <TextField.Root
           placeholder="RCON password"
