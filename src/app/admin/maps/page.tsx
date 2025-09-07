@@ -1,7 +1,15 @@
 "use client";
 
 import { Header } from "@/common";
-import { Button, Flex, Grid, Text, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Flex,
+  Grid,
+  Text,
+  TextField,
+  Skeleton,
+  Card,
+} from "@radix-ui/themes";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -65,7 +73,18 @@ export default function Maps() {
 
       <Flex direction="column" gap="2">
         {loading ? (
-          <Text color="gray">Loading…</Text>
+          Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton loading key={i}>
+              <Card>
+                <Flex
+                  p="3"
+                  justify="between"
+                  align="center"
+                  style={{ minHeight: 56 }}
+                />
+              </Card>
+            </Skeleton>
+          ))
         ) : maps.length === 0 ? (
           <Text color="gray">No maps.</Text>
         ) : (

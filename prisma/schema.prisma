@@ -107,6 +107,23 @@ model Tournament {
   formatConfig Json?
 }
 
+model Server {
+  id           Int       @id @default(autoincrement())
+  name         String
+  host         String
+  port         Int
+  rconPassword String
+  note         String    @default("")
+  isEnabled    Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastPingAt   DateTime?
+  lastPingMs   Int?
+  reachable    Boolean?
+
+  @@unique([host, port])
+}
+
 enum TournamentType {
   RoundRobin
   SingleElimination

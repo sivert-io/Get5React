@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Flex, Grid, ScrollArea } from "@radix-ui/themes";
+import { Flex, Grid, ScrollArea, Skeleton, Card } from "@radix-ui/themes";
 import { Navbar, useSteam } from "@/common";
 import { Wizard } from "@/wizard";
 
@@ -63,6 +63,26 @@ export default function Template({ children }: { children: React.ReactNode }) {
           </Grid>
         )}
         {doesUsersExist === false && <Wizard />}
+        {doesUsersExist === undefined && (
+          <Grid
+            gap="4"
+            width="100%"
+            maxWidth="1400px"
+            columns="300px 1084px"
+            px="4"
+          >
+            <Skeleton loading>
+              <Card>
+                <Flex style={{ minHeight: 400 }} />
+              </Card>
+            </Skeleton>
+            <Skeleton loading>
+              <Card>
+                <Flex style={{ minHeight: 400 }} />
+              </Card>
+            </Skeleton>
+          </Grid>
+        )}
       </Flex>
     </ScrollArea>
   );

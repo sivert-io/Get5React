@@ -5,8 +5,15 @@ import { getToken } from "next-auth/jwt";
 const prisma = new PrismaClient();
 
 export async function GET() {
-  const maps = await prisma.map.findMany();
-  return Response.json({ maps });
+  try {
+    const maps = await prisma.map.findMany();
+    return Response.json({ maps });
+  } catch (e: any) {
+    return Response.json(
+      { error: e?.message || "Failed to fetch maps" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {

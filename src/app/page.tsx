@@ -12,7 +12,6 @@ import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Card, Flex, Grid, Heading, Text } from "@radix-ui/themes";
 import Image from "next/image";
-// import { fakeTournaments } from "@/fakeData";
 import { formatDistance } from "date-fns";
 import { getTypeName } from "@/tournament";
 import Link from "next/link";

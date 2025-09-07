@@ -5,10 +5,17 @@ import { getToken } from "next-auth/jwt";
 const prisma = new PrismaClient();
 
 export async function GET() {
-  const tournaments = await prisma.tournament.findMany({
-    include: { teams: true, maps: true },
-  });
-  return Response.json({ tournaments });
+  try {
+    const tournaments = await prisma.tournament.findMany({
+      include: { teams: true, maps: true },
+    });
+    return Response.json({ tournaments });
+  } catch (e: any) {
+    return Response.json(
+      { error: e?.message || "Failed to fetch tournaments" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -17,6 +24,21 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await req.json();
+
+  function computeRequiredServers(type: TournamentType, maxTeams: number) {
+    const teams = Math.max(2, Number(maxTeams) || 2);
+    switch (type) {
+      case "SingleElimination":
+      case "Swiss":
+      case "RoundRobin":
+        return Math.ceil(teams / 2);
+      case "DoubleElimination":
+        return Math.ceil(teams / 2) + Math.ceil(teams / 4);
+      default:
+        return Math.ceil(teams / 2);
+    }
+  }
+
   try {
     const createData: any = {
       name: body.name,
@@ -34,8 +56,29 @@ export async function POST(req: NextRequest) {
         : new Date(Date.now() + 86400000),
       maxTeams: body.maxTeams ?? 16,
     };
-    if (body.formatConfig !== undefined)
-      createData.formatConfig = body.formatConfig;
+    // No pre-allocation: we auto-pick at start; return capacity info only
+    const start = new Date(createData.startDate);
+    const end = new Date(createData.endDate);
+    const overlapping = await prisma.tournament.findMany({
+      where: {
+        AND: [{ endDate: { gte: start } }, { startDate: { lte: end } }],
+      },
+      select: { id: true, name: true, type: true, maxTeams: true },
+    });
+    const serversEnabled = await prisma.server.count({
+      where: { isEnabled: true },
+    });
+    const overlapNeeded = overlapping.reduce(
+      (acc, t) => acc + computeRequiredServers(t.type, t.maxTeams),
+      0
+    );
+    const thisNeeded = computeRequiredServers(
+      createData.type,
+      createData.maxTeams
+    );
+    const totalNeeded = overlapNeeded + thisNeeded;
+    const capacityOk = serversEnabled >= totalNeeded;
+
     const created = await prisma.tournament.create({ data: createData });
     if (Array.isArray(body.mapIds) && body.mapIds.length > 0) {
       await prisma.map.updateMany({
@@ -43,7 +86,21 @@ export async function POST(req: NextRequest) {
         data: { tournamentId: created.id },
       });
     }
-    return Response.json({ tournament: created }, { status: 201 });
+    const requiredServers = computeRequiredServers(
+      createData.type,
+      createData.maxTeams
+    );
+    return Response.json(
+      {
+        tournament: created,
+        requiredServers,
+        capacityOk,
+        serversEnabled,
+        totalNeeded,
+        overlapCount: overlapping.length,
+      },
+      { status: 201 }
+    );
   } catch (e) {
     return Response.json(
       { error: "Failed to create tournament" },
@@ -58,6 +115,21 @@ export async function PUT(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await req.json();
+
+  function computeRequiredServers(type: TournamentType, maxTeams: number) {
+    const teams = Math.max(2, Number(maxTeams) || 2);
+    switch (type) {
+      case "SingleElimination":
+      case "Swiss":
+      case "RoundRobin":
+        return Math.ceil(teams / 2);
+      case "DoubleElimination":
+        return Math.ceil(teams / 2) + Math.ceil(teams / 4);
+      default:
+        return Math.ceil(teams / 2);
+    }
+  }
+
   try {
     const updateData: any = {
       name: body.name,
@@ -73,8 +145,33 @@ export async function PUT(req: NextRequest) {
       endDate: body.endDate ? new Date(body.endDate) : undefined,
       maxTeams: body.maxTeams,
     };
-    if (body.formatConfig !== undefined)
-      updateData.formatConfig = body.formatConfig;
+    const existing = await prisma.tournament.findUnique({
+      where: { id: Number(body.id) },
+      select: { startDate: true, endDate: true },
+    });
+    const start = updateData.startDate ?? existing?.startDate!;
+    const end = updateData.endDate ?? existing?.endDate!;
+    const overlapping = await prisma.tournament.findMany({
+      where: {
+        id: { not: Number(body.id) },
+        AND: [{ endDate: { gte: start } }, { startDate: { lte: end } }],
+      },
+      select: { id: true, name: true, type: true, maxTeams: true },
+    });
+    const serversEnabled = await prisma.server.count({
+      where: { isEnabled: true },
+    });
+    const overlapNeeded = overlapping.reduce(
+      (acc, t) => acc + computeRequiredServers(t.type, t.maxTeams),
+      0
+    );
+    const thisNeeded = computeRequiredServers(
+      updateData.type,
+      updateData.maxTeams
+    );
+    const totalNeeded = overlapNeeded + thisNeeded;
+    const capacityOk = serversEnabled >= totalNeeded;
+
     const updated = await prisma.tournament.update({
       where: { id: Number(body.id) },
       data: updateData,
@@ -93,7 +190,18 @@ export async function PUT(req: NextRequest) {
         });
       }
     }
-    return Response.json({ tournament: updated });
+    const requiredServers = computeRequiredServers(
+      updateData.type,
+      updateData.maxTeams
+    );
+    return Response.json({
+      tournament: updated,
+      requiredServers,
+      capacityOk,
+      serversEnabled,
+      totalNeeded,
+      overlapCount: overlapping.length,
+    });
   } catch (e) {
     return Response.json(
       { error: "Failed to update tournament" },

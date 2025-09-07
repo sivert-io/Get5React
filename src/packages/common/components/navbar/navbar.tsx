@@ -160,6 +160,10 @@ export function Navbar() {
           {profile?.isAdmin && (
             <Flex direction="column" gap="4">
               <Heading size="3">Admin</Heading>
+              <NavLink href="/admin/servers">
+                <BsServer />
+                Servers
+              </NavLink>
               <NavLink href="/admin/tournaments">
                 <BsTrophyFill />
                 Tournaments

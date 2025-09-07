@@ -12,6 +12,7 @@ import {
   Text,
   Tooltip,
   useThemeContext,
+  Skeleton,
 } from "@radix-ui/themes";
 import axios from "axios";
 import Link from "next/link";
@@ -31,6 +32,13 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <Flex direction="column" gap="4">
       <Header>Player</Header>
+      {user === undefined && (
+        <Skeleton loading>
+          <Card>
+            <Flex style={{ minHeight: 96 }} />
+          </Card>
+        </Skeleton>
+      )}
       {user === null && <Text>User does not exist</Text>}
       {user && (
         <Card>
@@ -92,7 +100,7 @@ export default function Page({ params }: { params: { id: string } }) {
           </Flex>
         </Card>
       )}
-      {user && (
+      {user ? (
         <div
           style={{
             display: "grid",
@@ -112,8 +120,18 @@ export default function Page({ params }: { params: { id: string } }) {
           <StatCard label="Refrag attempt %" value="77 %" />
           <StatCard label="Refrag success %" value="48 %" />
         </div>
+      ) : (
+        <Flex gap="2" direction="column">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton loading key={i}>
+              <Card>
+                <Flex style={{ minHeight: 120 }} />
+              </Card>
+            </Skeleton>
+          ))}
+        </Flex>
       )}
-      {user && (
+      {user ? (
         <Flex direction="column" gap="2">
           <Heading>Map statistics</Heading>
           <div
@@ -133,6 +151,12 @@ export default function Page({ params }: { params: { id: string } }) {
             <StatCard label="Anubis" value="N/A" />
           </div>
         </Flex>
+      ) : (
+        <Skeleton loading>
+          <Card>
+            <Flex style={{ minHeight: 160 }} />
+          </Card>
+        </Skeleton>
       )}
     </Flex>
   );
